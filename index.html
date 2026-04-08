@@ -1,2 +1,251 @@
 <!DOCTYPE html>
-<html><body><h1>AgroMartínez</h1></body></html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroMartínez — Portal de Gestión</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul:      #1a3a5c;
+      --azul-med:  #2a5298;
+      --azul-claro:#90caf9;
+      --verde:     #2e7d32;
+      --dorado:    #c8a84b;
+      --bg:        #f5f3ee;
+      --card-bg:   #ffffff;
+      --text:      #1a1a1a;
+      --muted:     #888;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--azul);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    .header-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+    .header-logo span { color: var(--dorado); }
+    .header-tag {
+      font-size: 10px;
+      color: var(--azul-claro);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, var(--azul) 0%, #2a5298 60%, #1a3a5c 100%);
+      padding: 60px 32px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--dorado);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 5vw, 44px);
+      color: #fff;
+      line-height: 1.15;
+      margin-bottom: 14px;
+    }
+    .hero-sub {
+      font-size: 14px;
+      color: rgba(255,255,255,0.65);
+      max-width: 440px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 18px;
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      border: 1px solid #e8e4dc;
+      padding: 24px 22px 20px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--azul);
+      opacity: 0;
+      transition: opacity 0.18s;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(26,58,92,0.12);
+      border-color: #c8c4bc;
+    }
+    .card:hover::before { opacity: 1; }
+
+    .card.disponible .card-status { color: var(--verde); }
+    .card.proximamente { opacity: 0.65; cursor: default; pointer-events: none; }
+    .card.proximamente .card-status { color: var(--muted); }
+
+    .card-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--azul);
+    }
+    .card-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+      flex: 1;
+    }
+    .card-status {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .card-arrow {
+      font-size: 18px;
+      color: var(--azul);
+      align-self: flex-end;
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: opacity 0.18s, transform 0.18s;
+    }
+    .card:hover .card-arrow { opacity: 1; transform: translateX(0); }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      padding: 32px;
+      font-size: 11px;
+      color: var(--muted);
+      border-top: 1px solid #e8e4dc;
+      margin-top: 20px;
+    }
+    .footer strong { color: var(--azul); }
+
+    @media (max-width: 500px) {
+      .hero { padding: 40px 20px 36px; }
+      .grid { padding: 0 16px; gap: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">Agro<span>Martínez</span></div>
+  <div class="header-tag">Portal de Gestión · BData</div>
+</header>
+
+<div class="hero">
+  <div class="hero-eyebrow">Bienvenido</div>
+  <h1 class="hero-title">Portal de Gestión<br>AgroMartínez</h1>
+  <p class="hero-sub">Accede a los módulos de gestión operacional, financiera y documental del campo.</p>
+</div>
+
+<div class="grid">
+
+  <a href="asignar.html" class="card disponible">
+    <div class="card-icon">🧾</div>
+    <div class="card-title">Documentos</div>
+    <div class="card-desc">Visualiza facturas y guías de despacho. Accede al visor XML de cada documento.</div>
+    <div class="card-status">✓ Disponible</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <div class="card proximamente">
+    <div class="card-icon">📊</div>
+    <div class="card-title">Dashboard</div>
+    <div class="card-desc">KPIs globales, mapa de unidades productivas, flujo de caja y producción estimada.</div>
+    <div class="card-status">Próximamente</div>
+  </div>
+
+  <div class="card proximamente">
+    <div class="card-icon">📋</div>
+    <div class="card-title">Reporte</div>
+    <div class="card-desc">Reporte operacional: labores, costos, ingresos y márgenes por unidad productiva.</div>
+    <div class="card-status">Próximamente</div>
+  </div>
+
+  <div class="card proximamente">
+    <div class="card-icon">🌱</div>
+    <div class="card-title">Producción</div>
+    <div class="card-desc">Seguimiento de producción e insumos por cultivo, proveedor y período.</div>
+    <div class="card-status">Próximamente</div>
+  </div>
+
+  <div class="card proximamente">
+    <div class="card-icon">📌</div>
+    <div class="card-title">Asignación</div>
+    <div class="card-desc">Asigna guías y facturas a unidades productivas por monto, porcentaje o hectárea.</div>
+    <div class="card-status">Próximamente</div>
+  </div>
+
+</div>
+
+<footer class="footer">
+  Desarrollado por <strong>BData.cl</strong> · AgroMartínez &copy; <span id="yr"></span>
+</footer>
+
+<script>
+  document.getElementById("yr").textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>
