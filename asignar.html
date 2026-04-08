@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentos — AgroMartínez</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f0ede6; color: #1a1a1a; }
+    .hdr { background: #1a3a5c; color: #fff; padding: 18px 20px 16px; }
+    .hdr-logo { font-size: 10px; font-weight: bold; letter-spacing: 0.1em; color: #90caf9; text-transform: uppercase; margin-bottom: 4px; }
+    .hdr-title { font-size: 20px; font-weight: bold; }
+    .hdr-sub { font-size: 12px; color: #90caf9; margin-top: 3px; }
+    .metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 14px; }
+    .m { background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 14px; }
+    .m-val { font-size: 24px; font-weight: bold; color: #fff; }
+    .m-val.red { color: #fca5a5; }
+    .m-label { font-size: 11px; color: #90caf9; margin-top: 3px; }
+    .body { padding: 16px; max-width: 900px; margin: 0 auto; }
+    .filters-wrap { background: #fff; border-radius: 10px; border: 1px solid #e5e2da; padding: 12px 14px; margin-bottom: 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .filter-label { font-size: 11px; color: #888; }
+    .fbtn { font-size: 11px; padding: 4px 12px; border-radius: 99px; border: 1px solid #ddd; background: #f8f8f6; color: #555; cursor: pointer; }
+    .fbtn.on { background: #1a3a5c; color: #fff; border-color: #1a3a5c; }
+    select, input[type=text], input[type=date] { border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 13px; font-family: Arial, sans-serif; outline: none; }
+    select:focus, input:focus { border-color: #1a3a5c; }
+    .doc-card { background: #fff; border-radius: 10px; border: 1px solid #e5e2da; margin-bottom: 12px; overflow: hidden; }
+    .doc-head { padding: 12px 16px; background: #fef9ec; border-bottom: 1px solid #f0ede6; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; cursor: pointer; user-select: none; }
+    .doc-head.factura { background: #faece7; }
+    .doc-head.factura-emitida { background: #e7f0fa; }
+    .doc-nombre { font-size: 14px; font-weight: bold; }
+    .doc-meta { font-size: 12px; color: #888; margin-top: 3px; }
+    .doc-monto { font-size: 16px; font-weight: bold; color: #b45309; white-space: nowrap; }
+    .doc-body { padding: 14px 16px; }
+    .badge-tipo { font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge-fact { background: #fee2d5; color: #9a3412; }
+    .badge-guia { background: #fef3c7; color: #92400e; }
+    .badge-asig { background: #dbeafe; color: #1e40af; }
+    .empty { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+    .loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a3a5c; color: #fff; padding: 10px 24px; border-radius: 99px; font-size: 13px; display: none; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+
+    /* Estado pago badge */
+    .estado-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+    .estado-pagado { background: #dcfce7; color: #166534; }
+    .estado-porpagar { background: #fee2e2; color: #991b1b; }
+    .estado-otro { background: #f3f4f6; color: #374151; }
+
+    @media (max-width: 600px) {
+      .metrics { grid-template-columns: repeat(2,1fr); }
+      .doc-head { flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-logo">AgroMartínez · BData</div>
+  <div class="hdr-title">Documentos Tributarios</div>
+  <div class="hdr-sub">Facturas y guías de despacho</div>
+  <div class="metrics">
+    <div class="m"><div class="m-val red" id="m-total">—</div><div class="m-label">Total documentos</div></div>
+    <div class="m"><div class="m-val" id="m-porpagar">—</div><div class="m-label">Por pagar</div></div>
+    <div class="m"><div class="m-val" id="m-monto">—</div><div class="m-label">Monto total</div></div>
+  </div>
+</div>
+
+<div class="body">
+  <div class="filters-wrap">
+    <div class="filter-label">Mostrar:</div>
+    <button class="fbtn on" id="f-todos"          onclick="setFiltro('todos')">Todos</button>
+    <button class="fbtn"    id="f-guia"            onclick="setFiltro('guia')">Solo guías</button>
+    <button class="fbtn"    id="f-factura"         onclick="setFiltro('factura')">Facturas recibidas</button>
+    <button class="fbtn"    id="f-factura-emitida" onclick="setFiltro('factura-emitida')">📤 Facturas emitidas</button>
+    <div style="width:1px;background:#eee;align-self:stretch;"></div>
+    <div class="filter-label">Desde:</div>
+    <input type="date" id="fecha-desde" style="width:140px;" onchange="render()">
+  </div>
+  <div id="app"><div class="loading">Cargando documentos...</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_AM   = "https://script.google.com/macros/s/AKfycbyh_vHuPCL7psGhKHlkXfbTks6uuaMtOsfx8oZhyQe_2K3hjhEhz3luWw-c61vt5wY/exec";
+const RUT_AM   = "79818130-0";
+const CLIENTE  = "AGROMARTINEZ";
+const PAW_BASE = "https://cgraniffo.pythonanywhere.com";
+
+let DOCS = [];
+let filtro = "todos";
+
+async function fetchSheet(sheet) {
+  const url = API_AM + "?action=getDocumentos";
+  const res = await fetch(url, { redirect: "follow" });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "Error API");
+  return data.data[sheet] || [];
+}
+
+function fmtPeso(n) { return "$" + Math.round(n).toLocaleString("es-CL"); }
+function fmtPesoK(n) { return "$" + Math.round(n/1000).toLocaleString("es-CL") + "k"; }
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 2500);
+}
+
+function setFiltro(f) {
+  filtro = f;
+  ["todos","guia","factura","factura-emitida"].forEach(x => {
+    document.getElementById("f-"+x).className = "fbtn" + (x===f?" on":"");
+  });
+  render();
+}
+
+function toggleDocCard(safeKey) {
+  const body  = document.getElementById("doc-body-"  + safeKey);
+  const arrow = document.getElementById("doc-arrow-" + safeKey);
+  if (!body) return;
+  const open = body.style.display === "none";
+  body.style.display    = open ? "block" : "none";
+  if (arrow) arrow.style.transform = open ? "rotate(180deg)" : "";
+}
+
+function render() {
+  const desde = document.getElementById("fecha-desde")?.value || "";
+
+  let docs = DOCS.filter(d => {
+    if (filtro === "guia"            && d._tipo !== "guia")            return false;
+    if (filtro === "factura"         && d._tipo !== "factura")         return false;
+    if (filtro === "factura-emitida" && d._tipo !== "factura-emitida") return false;
+    if (desde && (d["Fecha Emisión"]||"") < desde) return false;
+    return true;
+  });
+
+  // Actualizar métricas
+  const porPagar = docs.filter(d => String(d["EstadoPago"]||"").toLowerCase().includes("pagar")).length;
+  const montoTotal = docs.reduce((s,d) => s + Number(d["Monto Total"]||0), 0);
+  document.getElementById("m-total").textContent    = docs.length;
+  document.getElementById("m-porpagar").textContent = porPagar;
+  document.getElementById("m-monto").textContent    = fmtPesoK(montoTotal);
+
+  if (!docs.length) {
+    document.getElementById("app").innerHTML = `<div class="empty">🎉 No hay documentos${filtro!=="todos"?" en esta categoría":""}.</div>`;
+    return;
+  }
+
+  const cards = docs.map(doc => {
+    const key      = String(doc.KEY||doc["Folio"]||Math.random()).trim();
+    const safeKey  = key.replace(/[^a-z0-9]/gi,"_");
+    const tipo     = doc._tipo;
+    const folio    = doc["Folio"] || "";
+    const fecha    = doc["Fecha Emisión"] || "";
+    const monto    = Number(doc["Monto Total"]||0);
+    const rut      = String(doc["RUT Emisor"]||"").trim();
+    const proveedor = String(doc["Razón Social"]||"").trim();
+    const estado   = String(doc["EstadoPago"]||"").trim();
+    const fchVenc  = doc["FchVenc"] || "";
+
+    const estadoClass = estado.toLowerCase().includes("pagado") ? "estado-pagado"
+                      : estado.toLowerCase().includes("pagar")  ? "estado-porpagar"
+                      : "estado-otro";
+
+    // Detalles de líneas
+    const dets = (window.DET_FACTURAS?.[key] || window.DET_GUIAS_BY_FOLIO?.[rut+"-"+folio] || []);
+    let detHtml = "";
+    if (dets.length) {
+      const rows = dets.slice(0,5).map(d =>
+        `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid #f5f3ef;font-size:11px;">
+          <span style="color:#555;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${String(d["Nombre Item"]||"").trim()}</span>
+          <span style="color:#888;flex-shrink:0;">${Number(d["Cantidad"]||0).toLocaleString("es-CL")}</span>
+          <span style="font-weight:600;color:#444;flex-shrink:0;">${fmtPeso(Number(d["Monto Item"]||0))}</span>
+        </div>`
+      ).join("");
+      const extra = dets.length>5 ? `<div style="font-size:10px;color:#aaa;margin-top:4px;">+${dets.length-5} líneas más</div>` : "";
+      detHtml = `<div style="margin-top:8px;background:#f8f6f2;border-radius:6px;padding:8px 10px;">
+        <div style="font-size:10px;font-weight:bold;color:#888;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px;">Detalle ${dets.length} línea${dets.length!==1?"s":""}</div>
+        ${rows}${extra}
+      </div>`;
+    }
+
+    const urlVisor = `${PAW_BASE}/ver_documento/${encodeURIComponent(CLIENTE)}/${encodeURIComponent(rut)}/${encodeURIComponent(folio)}`;
+
+    return `<div class="doc-card">
+      <div class="doc-head ${tipo==="factura"?"factura":tipo==="factura-emitida"?"factura-emitida":""}"
+        onclick="toggleDocCard('${safeKey}')">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+            <span class="badge-tipo ${tipo==="guia"?"badge-guia":tipo==="factura-emitida"?"badge-asig":"badge-fact"}">${tipo==="guia"?"Guía":tipo==="factura-emitida"?"Emitida":"Factura"}</span>
+            <span style="font-size:11px;color:#888;">F:${folio} · ${fecha}</span>
+            ${fchVenc ? `<span style="font-size:10px;color:#888;">Vence: ${fchVenc}</span>` : ""}
+            <a href="${urlVisor}" target="_blank" onclick="event.stopPropagation()"
+               style="font-size:10px;color:#555;text-decoration:none;border:1px solid #ddd;padding:1px 7px;border-radius:4px;background:#fff;white-space:nowrap;">
+              📄 Ver XML
+            </a>
+          </div>
+          <div class="doc-nombre">${proveedor}${tipo==="factura-emitida"?' <span style="font-size:10px;background:#1a3a5c;color:#90caf9;padding:1px 6px;border-radius:3px;margin-left:4px;">📤 EMITIDA</span>':""}</div>
+          ${doc["TermPagoGlosa"] ? `<div class="doc-meta">${doc["TermPagoGlosa"]}</div>` : ""}
+          ${detHtml}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+          <div class="doc-monto">${fmtPeso(monto)}</div>
+          ${estado ? `<span class="estado-badge ${estadoClass}">${estado}</span>` : ""}
+          <div id="doc-arrow-${safeKey}" style="font-size:13px;color:#aaa;transition:transform 0.2s;">▼</div>
+        </div>
+      </div>
+      <div id="doc-body-${safeKey}" style="display:none;">
+        <div class="doc-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+            <div><span style="color:#888;font-size:11px;">RUT Emisor</span><br><strong>${rut}</strong></div>
+            <div><span style="color:#888;font-size:11px;">Folio</span><br><strong>${folio}</strong></div>
+            <div><span style="color:#888;font-size:11px;">Tipo DTE</span><br><strong>${doc["TipoDTE"]||"—"}</strong></div>
+            <div><span style="color:#888;font-size:11px;">Estado Pago</span><br><strong>${estado||"—"}</strong></div>
+            ${fchVenc ? `<div><span style="color:#888;font-size:11px;">Vencimiento</span><br><strong>${fchVenc}</strong></div>` : ""}
+            ${doc["MntNeto"] ? `<div><span style="color:#888;font-size:11px;">Neto</span><br><strong>${fmtPeso(Number(doc["MntNeto"]||0))}</strong></div>` : ""}
+            ${doc["IVA"] ? `<div><span style="color:#888;font-size:11px;">IVA</span><br><strong>${fmtPeso(Number(doc["IVA"]||0))}</strong></div>` : ""}
+          </div>
+          <div style="text-align:right;margin-top:14px;">
+            <a href="${urlVisor}" target="_blank"
+               style="display:inline-block;background:#1a3a5c;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:bold;text-decoration:none;">
+              📄 Ver documento completo
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("app").innerHTML = cards;
+}
+
+async function main() {
+  try {
+    const res = await fetch(API_AM + "?action=getDocumentos", { redirect: "follow" });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Error API");
+
+    const docs      = data.data.documentos      || [];
+    const detFact   = data.data.detalles_fact    || [];
+    const detGuias  = data.data.detalles_guias   || [];
+
+    // Clasificar por tipo
+    const facturas  = docs.filter(d => String(d["RUT Emisor"]||"").trim() !== RUT_AM)
+                          .map(d => ({ ...d, _tipo: "factura" }));
+    const emitidas  = docs.filter(d => String(d["RUT Emisor"]||"").trim() === RUT_AM)
+                          .map(d => ({ ...d, _tipo: "factura-emitida" }));
+    const guias     = detGuias.length ? [] : []; // placeholder hasta tener GuiasDespacho
+
+    DOCS = [...facturas, ...emitidas]
+      .sort((a,b) => new Date(b["Fecha Emisión"]||0) - new Date(a["Fecha Emisión"]||0));
+
+    // Índice detalles facturas
+    window.DET_FACTURAS = {};
+    detFact.forEach(d => {
+      const k = String(d["ID_Factura_Padre"]||"").trim();
+      if (!k) return;
+      if (!window.DET_FACTURAS[k]) window.DET_FACTURAS[k] = [];
+      window.DET_FACTURAS[k].push(d);
+    });
+
+    // Índice detalles guías por folio
+    window.DET_GUIAS_BY_FOLIO = {};
+    detGuias.forEach(d => {
+      const rut   = String(d["RUT Emisor"]||"").trim();
+      const folio = String(d["Folio"]||"").trim();
+      if (rut && folio) {
+        const fk = rut + "-" + folio;
+        if (!window.DET_GUIAS_BY_FOLIO[fk]) window.DET_GUIAS_BY_FOLIO[fk] = [];
+        window.DET_GUIAS_BY_FOLIO[fk].push(d);
+      }
+    });
+
+    render();
+  } catch(e) {
+    document.getElementById("app").innerHTML =
+      `<div style="background:#fff8f8;border:1px solid #fca5a5;border-radius:10px;padding:16px;color:#991b1b;font-size:13px;">
+        ❌ Error cargando datos: ${e.message}
+      </div>`;
+  }
+}
+
+// Fecha por defecto: hace 30 días
+const d30 = new Date(); d30.setDate(d30.getDate()-30);
+document.addEventListener("DOMContentLoaded", () => {
+  const el = document.getElementById("fecha-desde");
+  if (el) el.value = d30.toISOString().split("T")[0];
+});
+
+main();
+</script>
+</body>
+</html>
